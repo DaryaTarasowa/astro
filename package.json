@@ -1,0 +1,19 @@
+{
+  "name": "astro",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "PORT=8000 node ./bin/www",
+    "start-prod": "pm2 start ./bin/www",
+    "start-dev": "PORT=8000 nodemon ./bin/www --ignore data/",
+    "kill": "kill-port 8000",
+    "start-cron": "pm2 start cron.js"
+  },
+  "author": "Darya Haarman",
+  "license": "ISC",
+  "dependencies": {
+    "ejs": "^3.1.5",
+    "express": "^4.17.1",
+    "fs": "0.0.1-security"
+  }
+}

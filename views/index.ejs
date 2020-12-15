@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Astro</title>
+    <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
+
+    <script src="js/astrochart.min.js"></script>
+    <script>
+
+    	function createChart(data){
+            var radix = new astrology.Chart('paper', 600, 600).radix(data);
+		    radix.addPointsOfInterest( {"As":[data.cusps[0]],"Ic":[data.cusps[3]],"Ds":[data.cusps[6]],"Mc":[data.cusps[9]]});
+			radix.aspects();
+    	};
+
+        function checkData(){
+            <% if (error){ %>
+                console.log('Error');
+            <%} else { %>
+                <% if (data){ %>
+                    var stringData = <%- JSON.stringify(data) %>;
+                    createChart(stringData);
+                <%} %>
+            <%} %>
+
+        }
+    </script>
+</head>
+<body onLoad='checkData()'>
+    <form action="/natal" method="post">
+        <label> Date of Birth </label>
+        <input id="dateOfBirth" name="dateOfBirth"></input>
+        <label>Latitude</label>
+        <input id="lat" name="lat"></input>
+        <label>Longitutde</label>
+        <input id='long' name='long'></input>
+        <button type="submit">Submit</button>
+
+    </form>
+
+</body>
+</html>
