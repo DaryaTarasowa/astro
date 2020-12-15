@@ -7,7 +7,7 @@ $libPath = "./php/sweph/";
 putenv("PATH=$libPath");
 
 
-        $h_sys = 'T';
+        $h_sys = 'K';
         $birthday = $argv[1];
         $longitude = $argv[2];
         $latitude = $argv[3];
