@@ -123,7 +123,7 @@ app.post('/natal', function(req,res,next){
 })
 
 app.get('/natal', function(req,res,next){
-    res.render('index', {'data':'', 'error':'false'});
+    res.render('index', {'data':'', 'error':false});
 })
 
 // catching php files

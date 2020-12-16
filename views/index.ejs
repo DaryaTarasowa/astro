@@ -5,17 +5,23 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Astro</title>
-    <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
 
+    <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
     <script src="js/astrochart.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9vxl9JA5mpVG6jZKyiXKc06ruCXATABE&libraries=places"></script>
+
     <script>
 
+        var autocomplete;
+
+//Building a chart from the data
     	function createChart(data){
             var radix = new astrology.Chart('paper', 600, 600).radix(data);
 		    radix.addPointsOfInterest( {"As":[data.cusps[0]],"Ic":[data.cusps[3]],"Ds":[data.cusps[6]],"Mc":[data.cusps[9]]});
 			radix.aspects();
     	};
 
+//Check if there is data already submitted
         function checkData(){
             <% if (error){ %>
                 console.log('Error');
@@ -27,16 +33,54 @@
             <%} %>
 
         }
+
+//Launching autocomplete from google
+        function launchAutocomplete(){
+            var input = document.getElementById('placeOfBirth');
+            autocomplete = new google.maps.places.Autocomplete(
+                input,
+                {
+                  types: ["(cities)"]
+                }
+            );
+            autocomplete.addListener("place_changed", onPlaceChanged);
+        }
+
+        // getting the data for the selected city
+        function onPlaceChanged(){
+            const place = autocomplete.getPlace();
+            //console.log(place.geometry.location);
+            var lat = place.geometry.location.lat();
+            var lng = place.geometry.location.lng();
+            document.getElementById('lat').value = lat;
+            document.getElementById('long').value = lng;
+            $.get('https://maps.googleapis.com/maps/api/timezone/json?key=AIzaSyD9vxl9JA5mpVG6jZKyiXKc06ruCXATABE&timestamp=0&location=' + lat + ',' + lng, function(response){
+                var timezone = response.rawOffset/3600;
+                document.getElementById('timeZone').value = timezone;
+            })
+        }
+
+        //afterloadfunctions
+        function loadEverything(){
+            checkData();
+            launchAutocomplete();
+        }
     </script>
 </head>
-<body onLoad='checkData()'>
+<body onLoad='loadEverything()'>
     <form action="/natal" method="post">
         <label> Date of Birth </label>
         <input id="dateOfBirth" name="dateOfBirth"></input>
-        <label>Latitude</label>
-        <input id="lat" name="lat"></input>
-        <label>Longitutde</label>
-        <input id='long' name='long'></input>
+        <label> Time of Birth </label>
+        <input id="timeOfBirth" name="timeOfBirth"></input>
+        <label>Place of Birth</label>
+        <input id="placeOfBirth" name="placeOfBirth" type="text"/>
+        <label hidden>Latitude</label>
+        <input id="lat" name="lat" hidden></input>
+        <label hidden>Longitutde</label>
+        <input id='long' name='long' hidden></input>
+        <label hidden>Time Zone</label>
+        <input id='timeZone' name='timeZone' hidden></input>
         <button type="submit">Submit</button>
 
     </form>
