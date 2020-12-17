@@ -8,20 +8,102 @@
 
     <script src="https://code.jquery.com/jquery-3.1.1.js" integrity="sha256-16cdPddA6VdVInumRGo6IbivbERE8p7CQR3HzTBuELA=" crossorigin="anonymous"></script>
     <script src="js/astrochart.min.js"></script>
-    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyD9vxl9JA5mpVG6jZKyiXKc06ruCXATABE&libraries=places"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=<%= APIkey %>&libraries=places"></script>
 
     <script>
 
         var autocomplete;
 
-//Building a chart from the data
+        //Building a chart from the data
     	function createChart(data){
             var radix = new astrology.Chart('paper', 600, 600).radix(data);
 		    radix.addPointsOfInterest( {"As":[data.cusps[0]],"Ic":[data.cusps[3]],"Ds":[data.cusps[6]],"Mc":[data.cusps[9]]});
 			radix.aspects();
+
     	};
 
-//Check if there is data already submitted
+        //translating decimal values of the angle into minutes with rounding till 2 numbers
+        function decToMinutes(decimal){
+            var split = decimal.split('.');
+            var result = split[0] + '&deg;' + (parseInt(split[1]) * 0.6).toString().substr(0,2) + '&prime;';
+            return result;
+        }
+
+        //create a table of signs
+        function createZodiac(data){
+            var reporter = new astrology.Zodiac( data.cusps );
+            var signs = astrology.SYMBOL_SIGNS;
+
+            //table
+            var zodiac = document.createElement('table');
+            zodiac.id = "zodiac";
+            zodiac.setAttribute('float','right');
+
+            //thead
+            var thead = document.createElement('thead');
+            var th = document.createElement('th');
+            th.setAttribute('colspan', 5);
+            th.innerHTML = 'Tropical Zodiac';
+            thead.append(th);
+            zodiac.append(thead);
+
+            //tbody
+            var tbody = document.createElement('tbody');
+
+            for (var planetName in data.planets){
+                var row = document.createElement('tr');
+                row.id = planetName;
+
+                var point = {
+                    'planetSymbol': '',
+                    'planet': planetName,
+                    'signSymbol': '',
+                    'sign': signs[reporter.getSign(data.planets[planetName])-1],
+                    'sign_degrees': decToMinutes((data.planets[planetName][0] % 30).toString())
+                }
+
+                //creating cells with the className equal to the property
+                for (var name in point) {
+                    //console.log(name + "=" + point[name]);
+                    var cell = document.createElement('td');
+                    cell.className = name;
+                    cell.id = name+'_'+row.id;
+                    if (name.match('Symbol')){
+                        var div = document.createElement('div');
+                        div.id = cell.id+'_div';
+                        cell.append(div);
+                    }
+                    row.append(cell);
+                }
+
+                tbody.append(row);
+                zodiac.append(tbody);
+                document.body.append(zodiac);
+
+                //filling in values
+                for (var i = 0; i < row.childNodes.length; i++) {
+                    if (row.childNodes[i].className.match('Symbol')){
+                        var cellDiv = document.getElementById(row.childNodes[i].id+'_div');
+                        var svg = new astrology.SVG(cellDiv.id, 30, 30);
+                        var symbol = svg.getSymbol(point[row.childNodes[i + 1].className], 15, 15);
+
+                        cellDiv.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" version="1.1">' + symbol.innerHTML + "</svg>";
+
+                    }else{
+                        row.childNodes[i].innerHTML = point[row.childNodes[i].className];
+                    }
+
+                }
+
+
+            }
+
+
+
+
+        }
+
+        //Check if there is data already submitted
         function checkData(){
             <% if (error){ %>
                 console.log('Error');
@@ -29,12 +111,13 @@
                 <% if (data){ %>
                     var stringData = <%- JSON.stringify(data) %>;
                     createChart(stringData);
+                    createZodiac(stringData);
                 <%} %>
             <%} %>
 
         }
 
-//Launching autocomplete from google
+        //Launching autocomplete from google
         function launchAutocomplete(){
             var input = document.getElementById('placeOfBirth');
             autocomplete = new google.maps.places.Autocomplete(
@@ -49,12 +132,11 @@
         // getting the data for the selected city
         function onPlaceChanged(){
             const place = autocomplete.getPlace();
-            //console.log(place.geometry.location);
             var lat = place.geometry.location.lat();
             var lng = place.geometry.location.lng();
             document.getElementById('lat').value = lat;
             document.getElementById('long').value = lng;
-            $.get('https://maps.googleapis.com/maps/api/timezone/json?key=AIzaSyD9vxl9JA5mpVG6jZKyiXKc06ruCXATABE&timestamp=0&location=' + lat + ',' + lng, function(response){
+            $.get('https://maps.googleapis.com/maps/api/timezone/json?key=<%= APIkey %>&timestamp=0&location=' + lat + ',' + lng, function(response){
                 var timezone = response.rawOffset/3600;
                 document.getElementById('timeZone').value = timezone;
             })

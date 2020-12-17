@@ -6,7 +6,7 @@ const fs = require('fs');
 var runner = require("child_process");
 
 var ephModule = require('./modules/eph');
-
+var config = require('./config');
 
 
 app.use(express.json({ limit: '50mb' }));       // to support JSON-encoded bodies
@@ -18,20 +18,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 
 
-// var indexRouter = require('./routes/index');
-// app.use('/', function(req, res, next) {
-//
-//
-//     exec ("swetest -edir$libPath -b$date -ut$time -p0123456789DAmt -sid1 -eswe -house$longitude,$latitude,$h_sys -fPls -g, -head", output);
-//     res.send('success');
-// });
-
-var data = {
-	"planets":{"Moon":[0], "Sun":[45], "Mercury":[60]},
-	"cusps":[300, 340, 30, 60, 75, 90, 116, 172, 210, 236, 250, 274]
-};
-
-
 var execPHP = require('./execphp.js')();
 
 app.post('/natal', function(req,res,next){
@@ -39,25 +25,22 @@ app.post('/natal', function(req,res,next){
     var parametres = '';
     if (req.body){
         if (req.body.dateOfBirth){
-            //var dateOfBirth = req.body.dateOfBirth;
             formData.dateOfBirth =  req.body.dateOfBirth;
-            parametres+= ' '+ req.body.dateOfBirth
         }
         if (req.body.long){
-            //var longitude = req.body.long;
             formData.longitude = req.body.long;
-            parametres+= ' '+ req.body.long;
         }
         if (req.body.lat){
-            //var latitude = req.body.lat;
             formData.latitude = req.body.lat;
-            parametres+= ' '+ req.body.lat;
         }
-        if (req.body.time){
-            //var latitude = req.body.lat;
-            formData.time = req.body.time;
+        if (req.body.timeOfBirth){
+            formData.timeOfBirth = req.body.timeOfBirth;
+        }
+        if (req.body.timeZone){
+            formData.timeZone = req.body.timeZone;
         }
     }
+
     ephModule.getEph(formData, function(success, eph) {
         if (!success) res.render('error');
         var dataDone = {};
@@ -67,55 +50,20 @@ app.post('/natal', function(req,res,next){
             dataDone['cusps'].push(eph.houses.house[i]);
         }
 
-        dataDone['planets']['Moon'] = [parseInt(eph.moon.longitude)];
-        dataDone['planets']['Sun'] = [parseInt(eph.sun.longitude)];
-        dataDone['planets']['Neptune'] = [parseInt(eph.neptune.longitude)];
-        dataDone['planets']['Mercury'] = [parseInt(eph.mercury.longitude)];
-        dataDone['planets']['Venus'] = [parseInt(eph.venus.longitude)];
-        dataDone['planets']['Mars'] = [parseInt(eph.mars.longitude)];
-        dataDone['planets']['Jupiter'] = [parseInt(eph.jupiter.longitude)];
-        dataDone['planets']['Uranus'] = [parseInt(eph.uranus.longitude)];
-        dataDone['planets']['Saturn'] = [parseInt(eph.saturn.longitude)];
-        dataDone['planets']['Pluto'] = [parseInt(eph.pluto.longitude)];
-        dataDone['planets']['Chiron'] = [parseInt(eph.chiron.longitude)];
-        dataDone['planets']['NNode'] = [parseInt(eph.true_node.longitude)];
-        dataDone['planets']['Lilith'] = [parseInt(eph.lilith.longitude)];
+        dataDone['planets']['Sun'] = [parseFloat(eph.sun.longitude)];
+        dataDone['planets']['Moon'] = [parseFloat(eph.moon.longitude)];
+        dataDone['planets']['Mercury'] = [parseFloat(eph.mercury.longitude)];
+        dataDone['planets']['Venus'] = [parseFloat(eph.venus.longitude)];
+        dataDone['planets']['Mars'] = [parseFloat(eph.mars.longitude)];
+        dataDone['planets']['Jupiter'] = [parseFloat(eph.jupiter.longitude)];
+        dataDone['planets']['Uranus'] = [parseFloat(eph.uranus.longitude)];
+        dataDone['planets']['Saturn'] = [parseFloat(eph.saturn.longitude)];
+        dataDone['planets']['Neptune'] = [parseFloat(eph.neptune.longitude)];
+        dataDone['planets']['Pluto'] = [parseFloat(eph.pluto.longitude)];
+        dataDone['planets']['NNode'] = [parseFloat(eph.true_node.longitude)];
+        dataDone['planets']['Lilith'] = [parseFloat(eph.lilith.longitude)];
 
-        console.log(JSON.stringify(dataDone));
-
-        res.render('index', {'data' : dataDone, 'error' :false});
-
-        // execPHP.parseFile(req.originalUrl+'.php', parametres, function(success, phpResult) {
-        //     //console.log('success: ' +success +' data: ' +phpResult);
-        //     if (success){
-        //
-        //
-        //         // var dataPhP = JSON.parse(phpResult);
-        //         // var dataDone = {};
-        //         // dataDone['planets'] = {};
-        //         // dataDone['cusps'] = [];
-        //         // for (var planet in dataPhP){
-        //         //     var planetName = dataPhP[planet].split(',')[0].trim();
-        //         //     if (planetName.match('house')){
-        //         //         var house = parseInt(dataPhP[planet].split(',')[1].trim());
-        //         //         dataDone['cusps'].push(house);
-        //         //     }else if (planetName.match('mean') || planetName.match('true') || planetName=='Ascendant' || planetName.match('MC') || planetName =='Vertex' ){
-        //         //
-        //         //     }else {
-        //         //         var planetAngle = dataPhP[planet].split(',')[1].trim();
-        //         //         dataDone['planets'][planetName] = [planetAngle];
-        //         //     }
-        //         //
-        //         // }
-        //         // //console.log(dataDone);
-        //         // dataDone['cusps'] = [300, 340, 30, 60, 75, 90, 116, 172, 210, 236, 250, 274];
-        //         // res.render('index', {'data' : dataDone, 'error' :false});
-        // 		// res.end();
-        //     }else{
-        //         res.render('index', {'data' : {}, 'error' :true});
-        //     }
-        //
-    	// });
+        res.render('index', {'data' : dataDone, 'error' :false, 'APIkey': config.googleAPIKey});
 
     })
 
@@ -123,36 +71,9 @@ app.post('/natal', function(req,res,next){
 })
 
 app.get('/natal', function(req,res,next){
-    res.render('index', {'data':'', 'error':false});
+    res.render('index', {'data':'', 'APIkey': config.googleAPIKey, 'error':false});
 })
 
-// catching php files
-// app.use('*.php',function(req,res,next) {
-// 	execPHP.parseFile(req.originalUrl,function(phpResult) {
-//         var dataPhP = JSON.parse(phpResult);
-//         //console.log(dataPhP);
-//         var dataDone = {};
-//         dataDone['planets'] = {};
-//         dataDone['cusps'] = [];
-//         for (var planet in dataPhP){
-//             var planetName = dataPhP[planet].split(',')[0].trim();
-//             if (planetName.match('house')){
-//                 var house = parseInt(dataPhP[planet].split(',')[1].trim());
-//                 dataDone['cusps'].push(house);
-//             }else if (planetName.match('mean') || planetName.match('true') || planetName=='Ascendant' || planetName.match('MC') || planetName =='Vertex' ){
-//
-//             }else {
-//                 var planetAngle = dataPhP[planet].split(',')[1].trim();
-//                 dataDone['planets'][planetName] = [planetAngle];
-//             }
-//
-//         }
-//         //dataDone['cusps'] = [300, 340, 30, 60, 75, 90, 116, 172, 210, 236, 250, 274];
-//         res.render('index', {'data' : JSON.stringify(dataDone)});
-//         console.log(JSON.stringify(dataDone));
-// 		res.end();
-// 	});
-// });
 
 
 // catch 404 and forward to error handler
