@@ -27,8 +27,8 @@ app.post('/natal', function(req,res,next){
         if (req.body.dateOfBirth){
             formData.dateOfBirth =  req.body.dateOfBirth;
         }
-        if (req.body.long){
-            formData.longitude = req.body.long;
+        if (req.body.lng){
+            formData.longitude = req.body.lng;
         }
         if (req.body.lat){
             formData.latitude = req.body.lat;
@@ -44,10 +44,14 @@ app.post('/natal', function(req,res,next){
     ephModule.getEph(formData, function(success, eph) {
         if (!success) res.render('error');
         var dataDone = {};
-        dataDone['cusps'] = [];
         dataDone['planets'] = {};
-        for (var i = 0; i < 12; i++){
-            dataDone['cusps'].push(eph.houses.house[i]);
+        if (eph.houses){
+            dataDone['cusps'] = [];
+            for (var i = 0; i < 12; i++){
+                dataDone['cusps'].push(eph.houses.house[i]);
+            }
+        }else{
+            dataDone['cusps'] = null;
         }
 
         dataDone['planets']['Sun'] = [parseFloat(eph.sun.longitude)];
